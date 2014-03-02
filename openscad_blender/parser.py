@@ -66,8 +66,9 @@ def cleanup_remove_blank_lines(openscad_string):
 
 def remove_scad_comments_to_python(openscad_script):
     """
-    Convert C style comments to python comments
+    Remove openscad comments since they aren't in a format python likes
     """
+    # TODO: Make this convert the comments instead of removing them
     def replacer(match):
         s = match.group(0)
         if s.startswith('/'):
@@ -85,10 +86,11 @@ def convert(openscad_script, indent=4):
     """
     Convert a string containing an openscad script into a string of python code
     """
+    # TODO: Handle converting and passing special variables
     current_indent = 0
     python_script = ''
 
-    openscad_script = remove_scad_comments_to_python(openscad_script)
+    openscad_script = 'from openscad_blender.functions import *\n\n' + remove_scad_comments_to_python(openscad_script)
     for line in normalize(openscad_script):
         line, current_indent = convert_module_to_def(line, current_indent, indent)
         python_script += ' ' * current_indent
