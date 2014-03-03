@@ -15,18 +15,23 @@ This module provides two major things:
      * Converting { } into indents
 
    Simple example (the cube class and the true variable are provided by the wrapper from the second part):
-       import openscad.parser
 
-       print openscad.parser.convert('''
-       module foo() {
-           cube([10,10,10], center=true)
-       }
-       ''')
+   ```
+   import openscad.parser
+   
+   print openscad.parser.convert('''
+      module foo() {
+         cube([10,10,10], center=true);
+      }
+   ''')
+   ```
 
-       Returns
-       def foo():
-           cube([10,10,10], center=true)
-
+   Returns
+   
+   ```
+   def foo():
+      cube([10,10,10], center=true)
+   ```
 
 2. Provides a wrapper that implements the openscad functional statements and openscad variable constants
    using the blender python api.  So for example
