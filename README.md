@@ -23,21 +23,20 @@ This module provides two major things:
 
    Parser example:
 
-       import openscad.parser
-
-       openscad_code = '''
-       module foo() {
-           cube([10,10,10], center=true)
-       }
-       '''
-       print(openscad.parser.convert(openscad_code))
-
+   ```
+   import openscad.parser
+   
+   print openscad.parser.convert('''
+      module foo() {
+         cube([10,10,10], center=true);
+      }
+   ''')
+   ```
 
    Returns
-
-       from openscad_blender.functions import *
-
-       def foo():
-           cube([10,10,10], center=true)
-
+   
+   ```
+   def foo():
+      cube([10,10,10], center=true)
+   ```
 
