@@ -105,3 +105,8 @@ def execute(openscad_script):
     Convert an openscad script from a string to python and execute it
     """
     exec(convert(openscad_script))
+
+def include(filename):
+    script = open(filename).read()
+    execute(script)
+

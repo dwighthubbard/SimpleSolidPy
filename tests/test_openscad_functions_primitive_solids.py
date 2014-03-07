@@ -1,8 +1,13 @@
 __author__ = 'Dwight Hubbard'
 import sys
 import logging
-import StringIO
+import io
 import unittest
+sys.path.append('.')
+sys.path.append('tests')
+sys.path.append('openscad_blender')
+sys.path.append('openscad_blender/functions')
+
 import openscad_blender.parser
 from mock import openscad_function_cube, openscad_function_sphere, openscad_function_cylinder, \
     openscad_function_polyhedron
@@ -30,5 +35,8 @@ class Test_parser(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    unittest.main()
+    #logging.basicConfig(level=logging.DEBUG)
+    #unittest.main()
+    t=Test_parser()
+    t.test_openscad_execute_cube()
+    t.test_openscad_execute_sphere()

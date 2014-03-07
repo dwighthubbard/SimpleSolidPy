@@ -28,7 +28,7 @@ openscad_function_with_comments_parser_result = 'from openscad_blender.functions
 openscad_function_echo = 'echo("hello world")'
 openscad_function_echo_result = 'hello world\n'
 
-openscad_function_cube = 'cube([10, 10, 10], center=true)'
+openscad_function_cube = 'cube([10, 50, 20], center=true)'
 openscad_function_sphere = 'sphere(r=10)'
 openscad_function_cylinder = 'cylinder(h = 10, r1 = 20, r2 = 10, center = true)'
 openscad_function_polyhedron = '''polyhedron(
