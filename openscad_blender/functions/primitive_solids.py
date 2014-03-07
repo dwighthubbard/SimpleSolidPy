@@ -11,9 +11,9 @@ class openscad_primitive(object):
     location = (0,0,0)
 
     def __init__(self, *args, **kwargs):
-        global object_index
-        object_index += 1
-        self.name = 'openscad%s:%s' % (self.openscad_type, object_index)
+        global objects_index
+        objects_index[self.openscad_type] += 1
+        self.name = 'openscad%s%s' % (self.openscad_type, object_index)
         print(
             'Openscad call: %s(%s, %s)' % (
                 self.openscad_type, list(args), kwargs)
@@ -36,6 +36,12 @@ class openscad_primitive(object):
         print(
             'Openscad Cube: (%s, %s, %s)' % (self.width, self.length, self.height)
         )
+        return args, kwargs
+
+    def parse_arguments_radius(self, *args, **kwargs):
+        args, kwargs = super(sphere, self).parse_arguments(*args, **kwargs)
+        if 'r' in kwargs.keys():
+            self.radius = kwargs['r']/MEASUREMENT_DIVISOR
         return args, kwargs
 
     def create(self, *args, **kwargs):
@@ -74,14 +80,10 @@ class sphere(openscad_primitive):
     radius = 5/MEASUREMENT_DIVISOR
 
     def parse_arguments(self, *args, **kwargs):
-        args, kwargs = super(sphere, self).parse_arguments(*args, **kwargs)
-        if 'r' in kwargs.keys():
-            self.radius = kwargs['r']/MEASUREMENT_DIVISOR
-        return args, kwargs
+        return self.parse_arguments_radius(*args, **kwargs)
 
     def create(self, *args, **kwargs):
         super(sphere, self).create(*args, **kwargs)
-        print(kwargs)
         bpy.ops.mesh.primitive_uv_sphere_add(location=self.location)
         self.blender_object = bpy.context.object
         self.blender_object.name = self.name
@@ -89,7 +91,30 @@ class sphere(openscad_primitive):
 
 class cylinder(openscad_primitive):
     openscad_type = 'cylinder'
+    radius = 5/MEASUREMENT_DIVISOR
 
+    def parse_arguments(self, *args, **kwargs):
+        return self.parse_arguments_radius(*args, **kwargs)
+
+    def create(self, *args, **kwargs):
+        super(cylinder, self).create(*args, **kwargs)
+        print(kwargs)
+        bpy.ops.mesh.primitive_cylinder_add(location=self.location)
+        self.blender_object = bpy.context.object
+        self.blender_object.name = self.name
+        self.blender_object.scale = (self.radius*2, self.radius*2, self.radius*2)
 
 class polyhedron(openscad_primitive):
     openscad_type = 'polyhedron'
+    radius = 5/MEASUREMENT_DIVISOR
+
+    def parse_arguments(self, *args, **kwargs):
+        return self.parse_arguments_radius(*args, **kwargs)
+
+    def create(self, *args, **kwargs):
+        super(polyhedron, self).create(*args, **kwargs)
+        print(kwargs)
+        bpy.ops.mesh.primitive_polyhedron_add(location=self.location)
+        self.blender_object = bpy.context.object
+        self.blender_object.name = self.name
+        self.blender_object.scale = (self.radius*2, self.radius*2, self.radius*2)
