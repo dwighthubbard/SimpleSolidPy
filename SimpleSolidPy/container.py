@@ -28,11 +28,15 @@ class Container(object):
 
 
 class FreeCADContainer(Container):
-    def __init__(self):
+    main_window = None
+    def __init__(self, show_main_window=True):
         self.app = QtGui.QApplication(['SimpleSolidPython'])
-        FreeCADGui.showMainWindow()
-        self.mw = self.getMainWindow()
-        self.mw.showMinimized()
+        if show_main_window:
+            FreeCADGui.showMainWindow()
+        else:
+            FreeCADGui.setupWithoutGUI()
+        self.main_window = self.getMainWindow()
+        #self.main_window.showMinimized()
         self.doc=FreeCAD.newDocument()
 
     def start(self):
@@ -45,16 +49,25 @@ class FreeCADContainer(Container):
         self.app.processEvents()
 
     def getMainWindow(self):
-         toplevel = QtGui.qApp.topLevelWidgets()
-         for i in toplevel:
-             print i.metaObject().className()
-             if i.metaObject().className() == "Gui::MainWindow":
-                 return i
-         raise Exception("No main window found")
+        toplevel = QtGui.qApp.topLevelWidgets()
+        for i in toplevel:
+            #print i.metaObject().className()
+            if i.metaObject().className() == "Gui::MainWindow":
+                self.main_window = i
+                return i
+        raise Exception("No main window found")
+
+    def get3dview(self):
+        if not self.main_window:
+            return None
+        childs = self.main_window.findChildren(QtGui.QMainWindow)
+        for i in childs:
+            if i.metaObject().className()=="Gui::View3DInventor":
+                return i
+        return None
 
 
 class ImageContainer(Container):
-
     def __init__(self, outdir='/tmp'):
         self.outdir = outdir
         FreeCADGui.showMainWindow()

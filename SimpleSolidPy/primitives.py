@@ -45,6 +45,10 @@ class Attachment(object):
         self.connect(other_attachment)
         return self.object.fuse(other_attachment.object)
 
+    def __sub__(self, other_attachment):
+        self.connect(other_attachment)
+        return self.object.cut(other_attachment.object)
+
     def connect(self, other_attachment):
         """
         Move the object in other_attachment so it's attachment points connect to the attachment points of this
@@ -115,7 +119,6 @@ class FreeCadShape(object):
         self.attachments[connection].connect(attachment)
         SimpleSolidPy.root_window.loop_once()
 
-
     def attachment(self, name):
         return self.attachments[name]
 
@@ -123,6 +126,15 @@ class FreeCadShape(object):
         self.object = self.object.fuse(otherobject.object)
         SimpleSolidPy.root_window.loop_once()
         return self
+
+    def cut(self, otherobject):
+        self.object = self.object.cut(otherobject.object)
+        SimpleSolidPy.root_window.loop_once()
+        return self
+
+    def exportStl(self, filename):
+        return self.object.exportStl(filename)
+
 
 class Cube(FreeCadShape):
     method = Part.makeBox
@@ -146,7 +158,7 @@ if __name__ == "__main__":
     for i in range(10, 1, -1):
         c_new = Cube(i, i, 1)
         if c:
-            c = c.attachment('top') + c_new.attachment('bottom')
+            c = c.attachment('top') - c_new.attachment('bottom')
         else:
             c = c_new
     c.show()

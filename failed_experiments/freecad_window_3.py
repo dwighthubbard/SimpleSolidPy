@@ -3,6 +3,7 @@ import PyQt4
 from PyQt4 import QtGui
 import sys
 
+sys.path.append('.')
 sys.path.append('/usr/lib/freecad/lib')
 
 import FreeCAD, FreeCADGui, Part
@@ -18,7 +19,7 @@ def getMainWindow():
      raise Exception("No main window found")
 
 
-FreeCADGui.showMainWindow()
+#FreeCADGui.showMainWindow()
 #FreeCADGui.setupWithoutGUI()
 
 app = QtGui.qApp
