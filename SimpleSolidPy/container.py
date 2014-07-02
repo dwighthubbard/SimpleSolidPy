@@ -76,3 +76,6 @@ class ImageContainer(Container):
     def dump(self):
         self.doc.recompute()
         self.centerView()
+
+
+class EmbeddedContainer(Container):
