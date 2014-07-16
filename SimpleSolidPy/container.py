@@ -3,10 +3,12 @@
 __author__ = 'dwight'
 
 import sys
-from PyQt4 import QtGui
+#from PyQt4 import QtGui
 sys.path.append('/usr/lib/freecad/lib')
 import FreeCADGui
 import FreeCAD
+from PyQt4 import QtCore, QtGui
+#import SimpleSolidPy
 
 
 class Container(object):
@@ -31,11 +33,12 @@ class FreeCADContainer(Container):
     main_window = None
     def __init__(self, show_main_window=True):
         self.app = QtGui.QApplication(['SimpleSolidPython'])
+        self.main_window = None
         if show_main_window:
             FreeCADGui.showMainWindow()
+            self.main_window = self.getMainWindow()
         else:
             FreeCADGui.setupWithoutGUI()
-        self.main_window = self.getMainWindow()
         #self.main_window.showMinimized()
         self.doc=FreeCAD.newDocument()
 
@@ -78,4 +81,42 @@ class ImageContainer(Container):
         self.centerView()
 
 
-class EmbeddedContainer(Container):
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(508, 436)
+        self.centralwidget = QtGui.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout = QtGui.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName("gridLayout")
+        self.mdiArea = QtGui.QMdiArea(self.centralwidget)
+        #self.mdiArea.setViewMode(QtGui.QMdiArea.TabbedView)
+        #self.mdiArea.setTabPosition(QtGui.QTabWidget.South)
+        #self.mdiArea.setObjectName("mdiArea")
+        self.gridLayout.addWidget(self.mdiArea, 0, 0, 1, 1)
+        MainWindow.setCentralWidget(self.centralwidget)
+        #self.menubar = QtGui.QMenuBar(MainWindow)
+        #self.menubar.setGeometry(QtCore.QRect(0, 0, 508, 27))
+        #self.menubar.setObjectName("menubar")
+        #MainWindow.setMenuBar(self.menubar)
+        #self.statusbar = QtGui.QStatusBar(MainWindow)
+        #self.statusbar.setObjectName("statusbar")
+        #MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(
+            QtGui.QApplication.translate("MainWindow", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
+
+
+class EmbeddedContainer(FreeCADContainer):
+    def __init__(self):
+        self.app = QtGui.qApp
+        self.ui = Ui_MainWindow()
+        self.my_mw = QtGui.QMainWindow()
+        self.ui.setupUi(self.my_mw)
+        self.ui.mdiArea.addSubWindow(self.main_window)
+        self.my_mw.show()
+        super(EmbeddedContainer, self).__init__(show_main_window=False)
