@@ -23,15 +23,26 @@ class Container(object):
 
     def centerView(self):
         # switch off animation so that the camera is moved to the final position immediately
-        FreeCADGui.activeDocument().activeView().setAnimationEnabled(False)
-        FreeCADGui.activeDocument().activeView().viewAxometric()
-        FreeCADGui.activeDocument().activeView().fitAll()
-        #FreeCADGui.activeDocument().activeView().saveImage('crystal.png',800,600,'Current')
+        if not self.view:
+            try:
+                print(dir(self.doc))
+                self.view = self.doc.activeView()
+            except AttributeError:
+                self.view = None
+        if self.view:
+            self.view.setAnimationEnabled(False)
+            self.view.viewAxometric()
+            self.view.fitAll()
+            #FreeCADGui.activeDocument().activeView().saveImage('crystal.png',800,600,'Current')
+        else:
+            print('No view to center')
 
 
 class FreeCADContainer(Container):
     main_window = None
-    def __init__(self, show_main_window=True):
+    view = None
+    doc = None
+    def __init__(self, show_main_window=True, name='SimpleSolidPython'):
         self.app = QtGui.QApplication(['SimpleSolidPython'])
         self.main_window = None
         if show_main_window:
@@ -40,7 +51,13 @@ class FreeCADContainer(Container):
         else:
             FreeCADGui.setupWithoutGUI()
         #self.main_window.showMinimized()
-        self.doc=FreeCAD.newDocument()
+        self.doc=FreeCAD.newDocument(name)
+        try:
+            self.view = FreeCADGui.activeDocument().activeView()
+            #self.view = self.doc.activeView()
+            print('Unable to get the active view')
+        except AttributeError:
+            pass
 
     def start(self):
         self.doc.recompute()

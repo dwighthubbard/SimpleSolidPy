@@ -10,6 +10,6 @@ s = Sphere(7)
 
 c = c.attachment('center') + s.attachment('center')
 
-#c.exportStl('cube_and_ball.stl')
-c.show()
-SimpleSolidPy.root_window.start()
+c.exportStl('cube_and_ball.stl')
+#c.show()
+#SimpleSolidPy.root_window.start()
