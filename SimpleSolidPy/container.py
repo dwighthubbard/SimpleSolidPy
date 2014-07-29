@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-
 __author__ = 'dwight'
+
 
 import sys
 #from PyQt4 import QtGui
 sys.path.append('/usr/lib/freecad/lib')
+#sys.path.append('/usr/lib/python2.7/dist-packages/PyQt4')
 import FreeCADGui
 import FreeCAD
 from PyQt4 import QtCore, QtGui

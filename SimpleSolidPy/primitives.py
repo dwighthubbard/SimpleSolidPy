@@ -58,6 +58,7 @@ class Attachment(object):
 
     def __add__(self, other_attachment):
         self.connect(other_attachment)
+        SimpleSolidPy.root_window.doc.removeObject(self.object.doc_object)
         return self.object.fuse(other_attachment.object)
 
     def __sub__(self, other_attachment):
