@@ -40,25 +40,29 @@ class Attachment(object):
 
     @property
     def x(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, None]:
             return self.object.object.Placement.Base.x
-        return self.object.object.Placement.Base.x + self.object.object.BoundBox.XLength/2
+        return self.object.object.BoundBox.XMin + self.object.object.BoundBox.XLength/2
 
     @property
     def y(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, None]:
             return self.object.object.Placement.Base.y
-        return self.object.object.Placement.Base.y + self.object.object.BoundBox.YLength/2
+        return self.object.object.BoundBox.YMin + self.object.object.BoundBox.YLength/2
 
     @property
     def z(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, None]:
             return self.object.object.Placement.Base.z
-        return self.object.object.Placement.Base.z + self.object.object.BoundBox.ZLength/2
+        return self.object.object.BoundBox.ZMin + self.object.object.BoundBox.ZLength/2
 
     def __add__(self, other_attachment):
         self.connect(other_attachment)
-        SimpleSolidPy.root_window.doc.removeObject(self.object.doc_object)
+        if self.object.doc_object:
+            try:
+                SimpleSolidPy.root_window.doc.removeObject(self.object.name)
+            except Exception:
+                pass
         return self.object.fuse(other_attachment.object)
 
     def __sub__(self, other_attachment):
@@ -74,6 +78,7 @@ class Attachment(object):
         y = self.y - other_attachment.y
         z = self.z - other_attachment.z
         other_attachment.object.translate(Base.Vector(x, y, z))
+        SimpleSolidPy.root_window.doc.recompute()
 
 
 class TopAttachment(Attachment):
@@ -97,12 +102,43 @@ class BottomAttachment(Attachment):
 class FreeCadShape(object):
     object = None
     doc_object = None
+    view_object = None
     method = None
     attachments = {}
 
-    width = 10.0
-    length = 10.0
-    height = 10.0
+    _width = 10.0
+    _length = 10.0
+    _height = 10.0
+
+    _scale_x = 1.0
+    _scale_y = 1.0
+    _scale_z = 1.0
+
+    _color = None
+
+    @property
+    def width(self):
+        if self.doc_object:
+            self._width = self.doc_object.Shape.BoundBox.XLength
+        if self.object:
+            self._width = self.object.BoundBox.XLength
+        return self._width
+
+    @property
+    def length(self):
+        if self.doc_object:
+            self._length = self.doc_object.Shape.BoundBox.YLength
+        if self.object:
+            self._length = self.object.BoundBox.YLength
+        return self._length
+
+    @property
+    def height(self):
+        if self.doc_object:
+            self._height = self.doc_object.Shape.BoundBox.ZLength
+        if self.object:
+            self._height = self.object.BoundBox.ZLength
+        return self._height
 
     def __init__(self, *args, **kwargs):
         global object_index
@@ -112,9 +148,9 @@ class FreeCadShape(object):
             if self.method not in [Part.makeSphere] and len(args) < 3:
                 args = [args[0], args[0], args[0]]
             self.object = self.method(*args, **kwargs)
-            self.width = float(args[0])
-            self.length = float(args[0])
-            self.height = float(args[0])
+            self._width = float(args[0])
+            self._length = float(args[0])
+            self._height = float(args[0])
             #if len(args) > 1:
             #    self.length = float(args[1])
             #if len(args) > 2:
@@ -124,21 +160,37 @@ class FreeCadShape(object):
             'top': TopAttachment(self),
             'bottom': BottomAttachment(self)
         }
+        self.show()
         SimpleSolidPy.root_window.loop_once()
+
+    def hide(self):
+        try:
+            SimpleSolidPy.root_window.doc.removeObject(self.name)
+            self.doc_object = None
+            SimpleSolidPy.root_window.doc.recompute()
+        except Exception:
+            pass
 
     def show(self):
         result = None
+        self.hide()
         if self.object:
             #result = Part.show(self.object)
             document = FreeCAD.activeDocument()
             self.doc_object = document.addObject("Part::Feature", self.name)
             self.doc_object.Shape = self.object
+            self.scale(self._scale_x, self._scale_y, self._scale_z)
+            self.view_object = FreeCADGui.getDocument("SimpleSolidPython").getObject(self.name)
+            if self._color:
+                self.color(self._color)
             SimpleSolidPy.root_window.doc.recompute()
         SimpleSolidPy.root_window.loop_once()
         return result
 
     def translate(self, *args, **kwargs):
+        self.show()
         result = self.object.translate(*args, **kwargs)
+        self.show()
         SimpleSolidPy.root_window.loop_once()
         return result
 
@@ -151,24 +203,53 @@ class FreeCadShape(object):
 
     def fuse(self, otherobject):
         self.object = self.object.fuse(otherobject.object)
+        self.name = "Fuse%s%s" % (self.name, otherobject.name)
+        self.show()
+        otherobject.hide()
         SimpleSolidPy.root_window.loop_once()
         return self
 
     def cut(self, otherobject):
         self.object = self.object.cut(otherobject.object)
+        self.show()
         SimpleSolidPy.root_window.loop_once()
         return self
+
+    def color(self, color):
+        colors = {
+            'red': (1.0, 0.0, 0.0),
+            'green': (0.0, 1.0, 0.0),
+            'blue': (0.0,0.0,1.0)
+        }
+        if color in colors.keys():
+            color = colors[color]
+        self._color = color
+        self.view_object.ShapeColor = color
 
     def exportStl(self, filename):
         return self.object.exportStl(filename)
 
-    def scale(self, scale_x, scale_y, scale_z):
+    def scale_part(self, amount):
+        return self.object.scale(amount)
+
+    def scale(self, *args):
+        if len(args) == 3:
+            scale_x, scale_y, scale_z = args
+        else:
+            scale_x = scale_y = scale_z = args[0]
         if not self.doc_object:
             self.show()
         if self.doc_object:
             Draft.scale(self.doc_object, FreeCAD.Vector(scale_x, scale_y, scale_z), legacy=True)
+            self._scale_x = scale_x
+            self._scale_y = scale_y
+            self._scale_z = scale_z
+            #self.scale_part(scale_x)
         else:
             print('Could not find document object')
+        #self.show()
+        SimpleSolidPy.root_window.doc.recompute()
+        SimpleSolidPy.root_window.loop_once()
 
     def scale_to_size(self, width, length, height):
         if not width:
@@ -177,12 +258,15 @@ class FreeCadShape(object):
             length = self.object.BoundBox.YLength
         if not height:
             height = self.object.BoundBox.ZLength
-        print('dimensions: %dx%dx%d' % (width, length, height))
+        print('Scale to size dimensions: %dx%dx%d' % (width, length, height))
         scale_x = width / self.object.BoundBox.XLength
         scale_y = length / self.object.BoundBox.YLength
         scale_z = height / self.object.BoundBox.ZLength
-        print('scale: %fx%fx%f' % (scale_x, scale_y, scale_z))
+        scale_amount = min([scale_x, scale_y, scale_z])
+        print('Scale to size scale: %fx%fx%f' % (scale_x, scale_y, scale_z))
+        #self.scale(scale_amount, FreeCAD.Vector(scale_x, scale_y, scale_z))
         self.scale(scale_x, scale_y, scale_z)
+
 
 class Cube(FreeCadShape):
     method = Part.makeBox
@@ -226,16 +310,25 @@ class SVG(FreeCadShape):
             self.object = Part.makeCompound(solids)
             FreeCAD.closeDocument(doc_name)
             FreeCAD.setActiveDocument(SimpleSolidPy.root_window.doc.Name)
-            self.width = self.object.BoundBox.XLength
-            self.length = self.object.BoundBox.YLength
-            self.height = self.object.BoundBox.ZLength
+            self._width = self.object.BoundBox.XLength
+            self._length = self.object.BoundBox.YLength
+            self._height = self.object.BoundBox.ZLength
             #SimpleSolidPy.root_window.centerView()
         self.attachments = {
             'center': Attachment(self),
             'top': TopAttachment(self),
             'bottom': BottomAttachment(self)
         }
+        self.show()
+        self.doc_object.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0,1))
+        SimpleSolidPy.root_window.doc.recompute()
         SimpleSolidPy.root_window.loop_once()
+
+    def fix_position(self):
+        self.translate(FreeCAD.Vector(-self.object.BoundBox.XMin, -self.object.BoundBox.YMin, -self.object.BoundBox.ZMin))
+        self.show()
+        SimpleSolidPy.root_window.loop_once()
+
 
 
 if __name__ == "__main__":
