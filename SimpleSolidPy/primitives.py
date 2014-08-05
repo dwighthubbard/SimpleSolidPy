@@ -303,6 +303,9 @@ class FreeCadShape(object):
         #self.scale(scale_amount, FreeCAD.Vector(scale_x, scale_y, scale_z))
         self.scale(scale_x, scale_y, scale_z)
 
+    def view(self):
+        SimpleSolidPy.root_window.start()
+
 
 class Cube(FreeCadShape):
     method = Part.makeBox

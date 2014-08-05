@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-#import SimpleSolidPy
-import sys
-sys.path.append('.')
-from SimpleSolidPy.primitives import *
+from SimpleSolidPy.primitives import Cube, Sphere
 
 
 # Get a cube and a sphere
