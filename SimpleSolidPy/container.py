@@ -7,6 +7,8 @@ import sys
 sys.path.append('/usr/lib/freecad/lib')
 #sys.path.append('/usr/lib/python2.7/dist-packages/PyQt4')
 import FreeCADGui
+from FreeCAD import Base
+import Mesh
 import FreeCAD
 from PyQt4 import QtCore, QtGui
 #import SimpleSolidPy
@@ -26,7 +28,6 @@ class Container(object):
         # switch off animation so that the camera is moved to the final position immediately
         if not self.view:
             try:
-                print(dir(self.doc))
                 self.view = self.doc.activeView()
             except AttributeError:
                 self.view = None
@@ -86,6 +87,12 @@ class FreeCADContainer(Container):
             if i.metaObject().className()=="Gui::View3DInventor":
                 return i
         return None
+
+    def exportSTL(self, filename):
+        __objs__ = []
+        for obj in self.doc.Objects:
+            __objs__.append(obj)
+        Mesh.export(__objs__, filename)
 
 
 class ImageContainer(Container):

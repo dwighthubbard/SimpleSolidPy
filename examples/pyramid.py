@@ -12,4 +12,6 @@ for i in range(10, 1, -1):
     else:
         c = c_new
 
+SimpleSolidPy.root_window.exportSTL('pyramid.stl')
+
 SimpleSolidPy.root_window.start()

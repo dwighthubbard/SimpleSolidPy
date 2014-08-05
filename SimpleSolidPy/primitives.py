@@ -13,6 +13,7 @@ import FreeCAD
 import Part
 import Drawing
 import Draft
+import Mesh
 import importSVG
 import logging
 try:
@@ -22,6 +23,8 @@ except ImportError:
     import SimpleSolidPy
 import string
 import random
+import tempfile
+import urllib2
 
 
 object_index = collections.defaultdict(lambda:0)
@@ -40,21 +43,48 @@ class Attachment(object):
 
     @property
     def x(self):
-        if self.object.method in [Part.makeSphere, None]:
-            return self.object.object.Placement.Base.x
-        return self.object.object.BoundBox.XMin + self.object.object.BoundBox.XLength/2
+        if self.object.method in [Part.makeSphere]:
+            if self.object.doc_object:
+                return self.object.doc_object.Shape.Placement.Base.x
+            else:
+                return self.object.object.Placement.Base.x
+        if self.object.doc_object:
+            return self.object.doc_object.Shape.Placement.Base.x + self.object.doc_object.Shape.BoundBox.XLength/2
+        else:
+            return self.object.object.Placement.Base.x + self.object.object.BoundBox.XLength/2
 
     @property
     def y(self):
-        if self.object.method in [Part.makeSphere, None]:
-            return self.object.object.Placement.Base.y
-        return self.object.object.BoundBox.YMin + self.object.object.BoundBox.YLength/2
+        if self.object.method in [Part.makeSphere]:
+            if self.object.doc_object:
+                return self.object.doc_object.Shape.Placement.Base.y
+            else:
+                return self.object.object.Placement.Base.y
+        if self.object.method in [None]:
+            if self.object.doc_object:
+                print('==========================================\nPlacement Y Attachment\n==========================================')
+                print(self.object.doc_object.Shape.Placement.Base.y + self.object.doc_object.Shape.BoundBox.YLength/2)
+                return self.object.doc_object.Shape.Placement.Base.y + self.object.doc_object.Shape.BoundBox.YLength/2
+                #return self.object.doc_object.Shape.Placement.Base.y  + self.object.doc_object.Shape.BoundBox.YLength
+            else:
+                #return self.object.object.Placement.Base.y + self.object.BoundBox.YLength/2
+                return self.object.object.Placement.Base.y  + self.object.BoundBox.YLength
+        if self.object.doc_object:
+            return self.object.doc_object.Shape.BoundBox.YMin + self.object.doc_object.Shape.BoundBox.YLength/2
+        else:
+            return self.object.object.BoundBox.YMin + self.object.object.BoundBox.YLength/2
 
     @property
     def z(self):
-        if self.object.method in [Part.makeSphere, None]:
-            return self.object.object.Placement.Base.z
-        return self.object.object.BoundBox.ZMin + self.object.object.BoundBox.ZLength/2
+        if self.object.method in [Part.makeSphere]:
+            if self.object.doc_object:
+                return self.object.doc_object.Shape.Placement.Base.z
+            else:
+                return self.object.object.Placement.Base.z
+        if self.object.doc_object:
+            return self.object.doc_object.Shape.BoundBox.ZMin + self.object.doc_object.Shape.BoundBox.ZLength/2
+        else:
+            return self.object.object.BoundBox.ZMin + self.object.object.BoundBox.ZLength/2
 
     def __add__(self, other_attachment):
         self.connect(other_attachment)
@@ -87,6 +117,8 @@ class TopAttachment(Attachment):
     """
     @property
     def z(self):
+        if self.object.doc_object:
+            return self.object.doc_object.Shape.Placement.Base.z + self.object.doc_object.Shape.BoundBox.ZLength
         return self.object.object.Placement.Base.z + self.object.object.BoundBox.ZLength
 
 
@@ -96,7 +128,10 @@ class BottomAttachment(Attachment):
     """
     @property
     def z(self):
-        return 0
+        if True or self.object.method in [None]:
+            if self.object.doc_object:
+                return self.object.doc_object.Shape.Placement.Base.z + self.object.doc_object.Shape.BoundBox.ZMin
+        return self.object.object.Placement.Base.z + self.object.object.BoundBox.ZMin
 
 
 class FreeCadShape(object):
@@ -188,11 +223,11 @@ class FreeCadShape(object):
         return result
 
     def translate(self, *args, **kwargs):
-        self.show()
+        #self.show()
         result = self.object.translate(*args, **kwargs)
         self.show()
         SimpleSolidPy.root_window.loop_once()
-        return result
+        #return result
 
     def connect(self, connection, attachment):
         self.attachments[connection].connect(attachment)
@@ -227,7 +262,8 @@ class FreeCadShape(object):
         self.view_object.ShapeColor = color
 
     def exportStl(self, filename):
-        return self.object.exportStl(filename)
+        #return self.object.exportStl(filename)
+        Mesh.export([self.doc_object], filename)
 
     def scale_part(self, amount):
         return self.object.scale(amount)
@@ -294,6 +330,13 @@ class SVG(FreeCadShape):
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if 'filename' in kwargs:
             self.filename = kwargs['filename']
+        elif 'url' in kwargs:
+            f = tempfile.NamedTemporaryFile(delete=True)
+            self.filename = f.name
+            data = urllib2.urlopen(kwargs['url']).read()
+            f.write(data)
+            f.flush()
+            f.seek(0)
         if 'thickness' in kwargs:
             self.thickness = kwargs['thickness']
         doc_name = 'svg'+''.join([random.choice(string.ascii_letters+string.digits)for n in range(6)])
@@ -320,13 +363,13 @@ class SVG(FreeCadShape):
             'bottom': BottomAttachment(self)
         }
         self.show()
-        self.doc_object.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0,1))
+        #self.doc_object.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0,1))
         SimpleSolidPy.root_window.doc.recompute()
         SimpleSolidPy.root_window.loop_once()
 
     def fix_position(self):
-        self.translate(FreeCAD.Vector(-self.object.BoundBox.XMin, -self.object.BoundBox.YMin, -self.object.BoundBox.ZMin))
-        self.show()
+        self.translate(FreeCAD.Vector(-self.object.BoundBox.XMin, -self.object.BoundBox.YMin, 0))
+        #self.show()
         SimpleSolidPy.root_window.loop_once()
 
 
