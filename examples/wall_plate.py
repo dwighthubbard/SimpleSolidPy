@@ -1,15 +1,29 @@
 #!/usr/bin/env python
-#import SimpleSolidPy
-import sys
-sys.path.append('.')
-from SimpleSolidPy.primitives import *
+import SimpleSolidPy
+from SimpleSolidPy.primitives import FreeCadShape, Cube
 
 
-c = Cube(10)
-s = Sphere(7)
+class WallPlate(FreeCadShape):
+    plate_sizes = {
+        'standard': (69.85, 114.3, 6.0),
+        'midsize': (79.5, 123.85, 6.0),
+        'jumbo': (88.9, 133.35, 6.0),
+    }
+    plate = 'standard'
+    objects = {}
 
-c = c.attachment('center') + s.attachment('center')
+    def add_objects(self):
+        c1 = Cube(*self.plate_sizes[self.plate])
+        c2 = Cube(*self.plate_sizes[self.plate])
+        c2.scale(.9, .9, .9)
+        #c1.connect('bottom', c2.attachment('bottom'))
+        #compound = c1
+        compound = c1.attachment('bottom') - c2.attachment('bottom')
+        #compound = c1.cut(c2)
+        compound.color('blue')
+        #c1.hide()
+        #c2.hide()
+        self.object = None
 
-c.exportStl('cube_and_ball.stl')
-#c.show()
-#SimpleSolidPy.root_window.start()
+plate = WallPlate()
+SimpleSolidPy.preview()
