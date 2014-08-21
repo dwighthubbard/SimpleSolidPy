@@ -1,13 +1,15 @@
 #!/usr/bin/env python
+import SimpleSolidPy
 from SimpleSolidPy.primitives import Cube, Sphere
 
 
 # Get a cube and a sphere
-c = Cube(10)
-s = Sphere(7)
+c = Cube(25.4)
+s = Sphere(25.4*.7)
 
 # Connect their centers and fuse into a single object
-c = c.attachment('center') + s.attachment('center')
+c.connect('center', s.attachment('center'))
+s.color('red')
 
-# Draw our window
-SimpleSolidPy.root_window.start()
+# Show a view window
+SimpleSolidPy.preview()

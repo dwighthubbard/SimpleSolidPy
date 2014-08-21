@@ -15,15 +15,10 @@ class WallPlate(FreeCadShape):
     def add_objects(self):
         c1 = Cube(*self.plate_sizes[self.plate])
         c2 = Cube(*self.plate_sizes[self.plate])
-        c2.scale(.9, .9, .9)
-        #c1.connect('bottom', c2.attachment('bottom'))
-        #compound = c1
-        compound = c1.attachment('bottom') - c2.attachment('bottom')
-        #compound = c1.cut(c2)
-        compound.color('blue')
-        #c1.hide()
-        #c2.hide()
-        self.object = None
+        c2.scale(.95)
+        plate = c1.attachment('bottom') - c2.attachment('bottom')
+        self.doc_object = plate.doc_object
+        print self.doc_object.Name
 
 plate = WallPlate()
 SimpleSolidPy.preview()

@@ -97,11 +97,6 @@ class Attachment(object):
 
     def __sub__(self, other_attachment):
         self.connect(other_attachment)
-        if self.object.doc_object:
-            try:
-                SimpleSolidPy.root_window.doc.removeObject(self.object.name)
-            except Exception:
-                pass
         return self.object.cut(other_attachment.object)
 
     def connect(self, other_attachment):
@@ -200,11 +195,10 @@ class FreeCadShape(object):
             'bottom': BottomAttachment(self)
         }
         self.add_objects()
-        self.show()
         SimpleSolidPy.root_window.loop_once()
 
     def add_objects(self):
-        pass
+        self.show()
 
     def hide(self):
         try:
