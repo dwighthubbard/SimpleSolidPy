@@ -49,9 +49,9 @@ class Attachment(object):
             else:
                 return self.object.object.Placement.Base.x
         if self.object.doc_object:
-            return self.object.doc_object.Shape.Placement.Base.x + self.object.doc_object.Shape.BoundBox.XLength/2
+            return self.object.doc_object.Shape.Placement.Base.x + self.object.width/2
         else:
-            return self.object.object.Placement.Base.x + self.object.object.BoundBox.XLength/2
+            return self.object.object.Placement.Base.x + self.object.width/2
 
     @property
     def y(self):
@@ -63,16 +63,16 @@ class Attachment(object):
         if self.object.method in [None]:
             if self.object.doc_object:
                 print('==========================================\nPlacement Y Attachment\n==========================================')
-                print(self.object.doc_object.Shape.Placement.Base.y + self.object.doc_object.Shape.BoundBox.YLength/2)
-                return self.object.doc_object.Shape.Placement.Base.y + self.object.doc_object.Shape.BoundBox.YLength/2
+                print(self.object.doc_object.Shape.Placement.Base.y + self.object.length/2)
+                return self.object.doc_object.Shape.Placement.Base.y + self.object.length/2
                 #return self.object.doc_object.Shape.Placement.Base.y  + self.object.doc_object.Shape.BoundBox.YLength
             else:
                 #return self.object.object.Placement.Base.y + self.object.BoundBox.YLength/2
                 return self.object.object.Placement.Base.y  + self.object.BoundBox.YLength
         if self.object.doc_object:
-            return self.object.doc_object.Shape.BoundBox.YMin + self.object.doc_object.Shape.BoundBox.YLength/2
+            return self.object.doc_object.Shape.BoundBox.YMin + self.object.length/2
         else:
-            return self.object.object.BoundBox.YMin + self.object.object.BoundBox.YLength/2
+            return self.object.object.BoundBox.YMin + self.object.width/2
 
     @property
     def z(self):
@@ -82,9 +82,9 @@ class Attachment(object):
             else:
                 return self.object.object.Placement.Base.z
         if self.object.doc_object:
-            return self.object.doc_object.Shape.BoundBox.ZMin + self.object.doc_object.Shape.BoundBox.ZLength/2
+            return self.object.doc_object.Shape.BoundBox.ZMin + self.object.height/2
         else:
-            return self.object.object.BoundBox.ZMin + self.object.object.BoundBox.ZLength/2
+            return self.object.object.BoundBox.ZMin + self.object.height/2
 
     def __add__(self, other_attachment):
         self.connect(other_attachment)
@@ -97,6 +97,11 @@ class Attachment(object):
 
     def __sub__(self, other_attachment):
         self.connect(other_attachment)
+        if self.object.doc_object:
+            try:
+                SimpleSolidPy.root_window.doc.removeObject(self.object.name)
+            except Exception:
+                pass
         return self.object.cut(other_attachment.object)
 
     def connect(self, other_attachment):
@@ -155,7 +160,7 @@ class FreeCadShape(object):
     def width(self):
         if self.doc_object:
             self._width = self.doc_object.Shape.BoundBox.XLength
-        if self.object:
+        elif self.object:
             self._width = self.object.BoundBox.XLength
         return self._width
 
@@ -163,7 +168,7 @@ class FreeCadShape(object):
     def length(self):
         if self.doc_object:
             self._length = self.doc_object.Shape.BoundBox.YLength
-        if self.object:
+        elif self.object:
             self._length = self.object.BoundBox.YLength
         return self._length
 
@@ -171,7 +176,7 @@ class FreeCadShape(object):
     def height(self):
         if self.doc_object:
             self._height = self.doc_object.Shape.BoundBox.ZLength
-        if self.object:
+        elif self.object:
             self._height = self.object.BoundBox.ZLength
         return self._height
 
@@ -180,23 +185,26 @@ class FreeCadShape(object):
         object_index [type(self).__name__]+=1
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if self.method:
-            if self.method not in [Part.makeSphere] and len(args) < 3:
+            if self.method and self.method not in [Part.makeSphere] and len(args) < 3:
                 args = [args[0], args[0], args[0]]
             self.object = self.method(*args, **kwargs)
-            self._width = float(args[0])
-            self._length = float(args[0])
-            self._height = float(args[0])
-            #if len(args) > 1:
-            #    self.length = float(args[1])
-            #if len(args) > 2:
-            #    self.height = float(args[2])
+            if len(args) > 0:
+                self._width = float(args[0])
+            if len(args) > 1:
+                self._length = float(args[1])
+            if len(args) > 2:
+                self._height = float(args[2])
         self.attachments = {
             'center': Attachment(self),
             'top': TopAttachment(self),
             'bottom': BottomAttachment(self)
         }
+        self.add_objects()
         self.show()
         SimpleSolidPy.root_window.loop_once()
+
+    def add_objects(self):
+        pass
 
     def hide(self):
         try:
@@ -244,9 +252,17 @@ class FreeCadShape(object):
         SimpleSolidPy.root_window.loop_once()
         return self
 
-    def cut(self, otherobject):
+    def cut_part(self, otherobject):
         self.object = self.object.cut(otherobject.object)
         self.show()
+        SimpleSolidPy.root_window.loop_once()
+        return self
+
+    def cut(self, otherobject):
+        if not self.doc_object or not otherobject.doc_object:
+            print("Don't see all doc objects")
+            return self.cut_part(otherobject)
+        self.doc_object = Draft.cut(self.doc_object, otherobject.doc_object)
         SimpleSolidPy.root_window.loop_once()
         return self
 
