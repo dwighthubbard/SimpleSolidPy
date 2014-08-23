@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 __author__ = 'dwight'
 
-
+import os
 import sys
 #from PyQt4 import QtGui
 sys.path.append('/usr/lib/freecad/lib')
 #sys.path.append('/usr/lib/python2.7/dist-packages/PyQt4')
+import collections
+import tempfile
 import FreeCADGui
 from FreeCAD import Base
 import Mesh
 import FreeCAD
 from PyQt4 import QtCore, QtGui
 #import SimpleSolidPy
+import SimpleSolidPy.primitives
 
 
 class Container(object):
@@ -88,12 +91,36 @@ class FreeCADContainer(Container):
                 return i
         return None
 
-    def exportSTL(self, filename):
+    def exportSTL(self, filename, split_colors=True):
+        __objs_dict__ = collections.defaultdict(lambda:[])
         __objs__ = []
         for obj in self.doc.Objects:
+            red, green, blue, j1 = obj.ViewObject.ShapeColor
+            red = round(red, 6)
+            green = round(green, 6)
+            blue = round(blue, 6)
+            color = '%6f:%6f:%6f' % (red, green, blue)
+            for key, value in SimpleSolidPy.primitives.colors.items():
+                print (key, (red, green, blue), value)
+                if (red, green, blue) == value:
+                    print('setting color')
+                    color = key
+            print(color)
+            __objs_dict__[color].append(obj)
             __objs__.append(obj)
-        Mesh.export(__objs__, filename)
+        if split_colors:
+            for key, value in __objs_dict__.items():
+                Mesh.export(value, filename.replace('stl','').strip('.')+'_'+key+'.stl')
+        else:
+            Mesh.export(__objs__, filename)
 
+    def previewMakerware(self):
+        d = tempfile.mkdtemp()
+        filename = os.path.join(d, 'simplesolidpy.stl')
+        self.exportSTL(filename, split_colors=True)
+        files = [os.path.join(d, f) for f in os.listdir(d)]
+        print(files)
+        os.system('makerware %s &' % (' '.join(files)))
 
 class ImageContainer(Container):
     def __init__(self, outdir='/tmp'):

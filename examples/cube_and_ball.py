@@ -9,7 +9,11 @@ s = Sphere(25.4*.7)
 
 # Connect their centers and fuse into a single object
 c.connect('center', s.attachment('center'))
+c.color('purple')
 s.color('red')
 
 # Show a view window
 SimpleSolidPy.preview()
+
+#SimpleSolidPy.root_window.exportSTL('/tmp/cube_and_ball.stl', split_colors=True)
+#SimpleSolidPy.root_window.previewMakerware()
