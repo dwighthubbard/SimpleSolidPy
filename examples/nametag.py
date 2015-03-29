@@ -7,14 +7,18 @@ from SimpleSolidPy.primitives import Cube, SVG
 backing = Cube(86, 60, 1)
 
 # Create a an object with the SVG logo
-logo = SVG(filename='/home/dwight/github/pyladies-kit/pyladies/swag/stickers/face_sticker.svg', thickness=.3)
+logo = SVG(
+    filename='~/github/pyladies-kit/pyladies/swag/stickers/face_sticker.svg',
+    thickness=.6
+)
 
 # We could have used a url instead of a filename if we wanted
 #logo = SVG(url='https://raw.githubusercontent.com/pyladies/pyladies-kit/master/pyladies/swag/stickers/logo-sticker.svg', thickness=3)
 
 # Scale the logo to fit onto the nametag backing
-logo.scale_to_size(backing.width, backing.length, .3)
+logo.scale_to_size(backing.width, backing.length, logo.height)
 
+print(logo.width, logo.length, logo.height)
 # Give it a color so we can see what is what
 logo.color('red')
 

@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-__author__ = 'dwight'
-
 import os
 import sys
 #from PyQt4 import QtGui
@@ -48,9 +46,9 @@ class FreeCADContainer(Container):
     view = None
     doc = None
     def __init__(self, show_main_window=True, name='SimpleSolidPython'):
-        self.app = QtGui.QApplication(['SimpleSolidPython'])
         self.main_window = None
         if show_main_window:
+            self.app = QtGui.QApplication(['SimpleSolidPython'])
             FreeCADGui.showMainWindow()
             self.main_window = self.getMainWindow()
         else:
@@ -171,4 +169,5 @@ class EmbeddedContainer(FreeCADContainer):
         self.ui.setupUi(self.my_mw)
         self.ui.mdiArea.addSubWindow(self.main_window)
         self.my_mw.show()
+        print('Showing window, now embedding')
         super(EmbeddedContainer, self).__init__(show_main_window=False)

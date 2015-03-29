@@ -488,7 +488,7 @@ class SVG(FreeCadShape):
         object_index [type(self).__name__]+=1
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if 'filename' in kwargs:
-            self.filename = kwargs['filename']
+            self.filename = os.path.expanduser(kwargs['filename'])
         elif 'url' in kwargs:
             f = tempfile.NamedTemporaryFile(delete=True)
             self.filename = f.name
@@ -498,7 +498,7 @@ class SVG(FreeCadShape):
             f.seek(0)
         if 'thickness' in kwargs:
             self.thickness = kwargs['thickness']
-        doc_name = 'svg'+''.join([random.choice(string.ascii_letters+string.digits)for n in range(6)])
+        doc_name = 'svg'+''.join([random.choice(string.ascii_letters+string.digits) for n in range(6)])
         #doc_name = 'svg_%s' % os.path.basename(self.filename)
         doc = FreeCAD.newDocument(doc_name)
         if self.filename and doc:
