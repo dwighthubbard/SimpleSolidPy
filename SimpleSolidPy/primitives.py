@@ -1,18 +1,20 @@
 #!/usr/bin/python2.7
 from __future__ import print_function
-#from PyQt4 import QtGui
+# from PyQt4 import QtGui
 
+import collections
 import os
 import sys
-import collections
+sys.path.insert(0, '.')
 sys.path.append('/usr/lib/freecad/lib')
 import FreeCADGui
-#import FreeCAD as App
+# import FreeCAD as App
 from FreeCAD import Base
 import FreeCAD
 import Part
 import Drawing
 import Draft
+# noinspection PyPackageRequirements
 import Mesh
 import importSVG
 import logging
@@ -21,19 +23,24 @@ try:
 except ImportError:
     sys.path.append('.')
     import SimpleSolidPy
-import string
 import random
+import string
 import tempfile
 import urllib2
 
 
-object_index = collections.defaultdict(lambda:0)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.debug('Module loading')
+
+
+object_index = collections.defaultdict(lambda: 0)
 
 
 colors = {
     'red': (1.0, 0.0, 0.0),
     'green': (0.0, 1.0, 0.0),
-    'blue': (0.0,0.0,1.0),
+    'blue': (0.0, 0.0, 1.0),
     'grey': (0.800000011920929, 0.800000011920929, 0.800000011920929),
     "aliceBlue": (0.941176, 0.972549, 1.000000),
     "antiqueWhite": (0.980392, 0.921569, 0.843137),
@@ -208,19 +215,21 @@ class Attachment(object):
                 return self.object.doc_object.Shape.Placement.Base.y
             else:
                 return self.object.object.Placement.Base.y
-        if self.object.method in [None]:
-            if self.object.doc_object:
-                print('==========================================\nPlacement Y Attachment\n==========================================')
-                print(self.object.doc_object.Shape.Placement.Base.y + self.object.length/2)
-                return self.object.doc_object.Shape.Placement.Base.y + self.object.length/2
-                #return self.object.doc_object.Shape.Placement.Base.y  + self.object.doc_object.Shape.BoundBox.YLength
-            else:
-                #return self.object.object.Placement.Base.y + self.object.BoundBox.YLength/2
-                return self.object.object.Placement.Base.y  + self.object.BoundBox.YLength
+        # if self.object.method in [None]:
+        #     if self.object.doc_object:
+        #         print('==========================================\nPlacement Y Attachment\n==========================================')
+        #         print(self.object.doc_object.Shape.Placement.Base.y + self.object.length/2)
+        #         return self.object.doc_object.Shape.Placement.Base.y + self.object.length/2
+        #         #return self.object.doc_object.Shape.Placement.Base.y  + self.object.doc_object.Shape.BoundBox.YLength
+        #     else:
+        #         #return self.object.object.Placement.Base.y + self.object.BoundBox.YLength/2
+        #         return self.object.object.Placement.Base.y  + self.object.BoundBox.YLength
         if self.object.doc_object:
-            return self.object.doc_object.Shape.BoundBox.YMin + self.object.length/2
+            # return self.object.doc_object.Shape.BoundBox.YMin + self.object.length/2
+            return self.object.doc_object.Shape.Placement.Base.y + self.object.length/2
         else:
-            return self.object.object.BoundBox.YMin + self.object.width/2
+            # return self.object.object.BoundBox.YMin + self.object.width/2
+            return self.object.object.Placement.Base.y + self.object.length/2
 
     @property
     def z(self):
@@ -237,10 +246,7 @@ class Attachment(object):
     def __add__(self, other_attachment):
         self.connect(other_attachment)
         if self.object.doc_object:
-            try:
-                SimpleSolidPy.root_window.doc.removeObject(self.object.name)
-            except Exception:
-                pass
+            SimpleSolidPy.root_window.doc.removeObject(self.object.name)
         return self.object.fuse(other_attachment.object)
 
     def __sub__(self, other_attachment):
@@ -256,6 +262,9 @@ class Attachment(object):
         y = self.y - other_attachment.y
         z = self.z - other_attachment.z
         other_attachment.object.translate(Base.Vector(x, y, z))
+        if hasattr(self.object.object, 'fix_position'):
+            logger.debug('Fixing position')
+            self.object.object.fix_position()
         SimpleSolidPy.root_window.doc.recompute()
 
 
@@ -325,7 +334,8 @@ class FreeCadShape(object):
 
     def __init__(self, *args, **kwargs):
         global object_index
-        object_index [type(self).__name__]+=1
+
+        object_index[type(self).__name__] += 1
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if self.method:
             if self.method and self.method not in [Part.makeSphere] and len(args) < 3:
@@ -349,18 +359,19 @@ class FreeCadShape(object):
         self.show()
 
     def hide(self):
+        # noinspection PyBroadException
         try:
             SimpleSolidPy.root_window.doc.removeObject(self.name)
-            self.doc_object = None
-            SimpleSolidPy.root_window.doc.recompute()
         except Exception:
             pass
+        self.doc_object = None
+        SimpleSolidPy.root_window.doc.recompute()
 
     def show(self):
         result = None
         self.hide()
         if self.object:
-            #result = Part.show(self.object)
+            # result = Part.show(self.object)
             document = FreeCAD.activeDocument()
             self.doc_object = document.addObject("Part::Feature", self.name)
             self.doc_object.Shape = self.object
@@ -373,11 +384,11 @@ class FreeCadShape(object):
         return result
 
     def translate(self, *args, **kwargs):
-        #self.show()
+        # self.show()
         result = self.object.translate(*args, **kwargs)
         self.show()
         SimpleSolidPy.root_window.loop_once()
-        #return result
+        # return result
 
     def connect(self, connection, attachment):
         self.attachments[connection].connect(attachment)
@@ -410,7 +421,7 @@ class FreeCadShape(object):
 
     def color(self, color=None):
         if not color:
-            color=self._color
+            color = self._color
         if color in colors.keys():
             color = colors[color]
         self._color = color
@@ -418,7 +429,7 @@ class FreeCadShape(object):
         return self._color
 
     def exportStl(self, filename):
-        #return self.object.exportStl(filename)
+        # return self.object.exportStl(filename)
         Mesh.export([self.doc_object], filename)
 
     def scale_part(self, amount):
@@ -436,10 +447,14 @@ class FreeCadShape(object):
             self._scale_x = scale_x
             self._scale_y = scale_y
             self._scale_z = scale_z
-            #self.scale_part(scale_x)
+            # self.scale_part(scale_x)
         else:
             print('Could not find document object')
-        #self.show()
+        # self.show()
+        if isinstance(self, SVG):
+            # The base location of the svg object is different than other objects, so move it to be consistent
+            # with the other objects.
+            self.object.translate(FreeCAD.Vector(-self.object.BoundBox.XMin, -self.object.BoundBox.YMin, 0))
         SimpleSolidPy.root_window.doc.recompute()
         SimpleSolidPy.root_window.loop_once()
 
@@ -456,7 +471,7 @@ class FreeCadShape(object):
         scale_z = height / self.object.BoundBox.ZLength
         scale_amount = min([scale_x, scale_y, scale_z])
         print('Scale to size scale: %fx%fx%f' % (scale_x, scale_y, scale_z))
-        #self.scale(scale_amount, FreeCAD.Vector(scale_x, scale_y, scale_z))
+        # self.scale(scale_amount, FreeCAD.Vector(scale_x, scale_y, scale_z))
         self.scale(scale_x, scale_y, scale_z)
 
     def view(self):
@@ -478,6 +493,7 @@ class Cylinder(FreeCadShape):
 class Polyhedron(FreeCadShape):
     method = Part.makePolygon
 
+
 class SVG(FreeCadShape):
     method = None
     filename = None
@@ -485,7 +501,7 @@ class SVG(FreeCadShape):
 
     def __init__(self, *args, **kwargs):
         global object_index
-        object_index [type(self).__name__]+=1
+        object_index[type(self).__name__] += 1
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if 'filename' in kwargs:
             self.filename = os.path.expanduser(kwargs['filename'])
@@ -498,8 +514,9 @@ class SVG(FreeCadShape):
             f.seek(0)
         if 'thickness' in kwargs:
             self.thickness = kwargs['thickness']
+        # noinspection PyUnusedLocal
         doc_name = 'svg'+''.join([random.choice(string.ascii_letters+string.digits) for n in range(6)])
-        #doc_name = 'svg_%s' % os.path.basename(self.filename)
+        # doc_name = 'svg_%s' % os.path.basename(self.filename)
         doc = FreeCAD.newDocument(doc_name)
         if self.filename and doc:
             importSVG.insert(self.filename, doc_name)
@@ -515,22 +532,21 @@ class SVG(FreeCadShape):
             self._width = self.object.BoundBox.XLength
             self._length = self.object.BoundBox.YLength
             self._height = self.object.BoundBox.ZLength
-            #SimpleSolidPy.root_window.centerView()
+            # SimpleSolidPy.root_window.centerView()
         self.attachments = {
             'center': Attachment(self),
             'top': TopAttachment(self),
             'bottom': BottomAttachment(self)
         }
         self.show()
-        #self.doc_object.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0,1))
+        # self.doc_object.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,0),FreeCAD.Rotation(0,0,0,1))
         SimpleSolidPy.root_window.doc.recompute()
         SimpleSolidPy.root_window.loop_once()
 
     def fix_position(self):
         self.translate(FreeCAD.Vector(-self.object.BoundBox.XMin, -self.object.BoundBox.YMin, 0))
-        #self.show()
+        # self.show()
         SimpleSolidPy.root_window.loop_once()
-
 
 
 if __name__ == "__main__":

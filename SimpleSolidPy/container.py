@@ -6,6 +6,7 @@ sys.path.append('/usr/lib/freecad/lib')
 #sys.path.append('/usr/lib/python2.7/dist-packages/PyQt4')
 import collections
 import tempfile
+import logging
 import FreeCADGui
 from FreeCAD import Base
 import Mesh
@@ -13,6 +14,10 @@ import FreeCAD
 from PyQt4 import QtCore, QtGui
 #import SimpleSolidPy
 import SimpleSolidPy.primitives
+
+
+logger = logging.getLogger(__name__)
+logger.debug('Module loading')
 
 
 class Container(object):

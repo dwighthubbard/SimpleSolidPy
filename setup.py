@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='SimpleSolidPy',
-    version='0.0.2',
+    version='0.0.3',
     description='Python interface to for declarative geometry',
     author='Dwight Hubbard',
     author_email='d@d-h.us',

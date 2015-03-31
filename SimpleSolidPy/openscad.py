@@ -2,7 +2,12 @@ __author__ = 'Dwight Hubbard'
 """
 Parse openscad script as a string
 """
+import logging
 import re
+
+
+logger = logging.getLogger(__name__)
+logger.debug('Module loading')
 
 
 # Single line manipulations
