@@ -198,7 +198,7 @@ class Attachment(object):
 
     @property
     def x(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, Part.makeCylinder]:
             if self.object.doc_object:
                 return self.object.doc_object.Shape.Placement.Base.x
             else:
@@ -210,7 +210,7 @@ class Attachment(object):
 
     @property
     def y(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, Part.makeCylinder]:
             if self.object.doc_object:
                 return self.object.doc_object.Shape.Placement.Base.y
             else:
@@ -233,7 +233,7 @@ class Attachment(object):
 
     @property
     def z(self):
-        if self.object.method in [Part.makeSphere]:
+        if self.object.method in [Part.makeSphere, Part.makeCylinder]:
             if self.object.doc_object:
                 return self.object.doc_object.Shape.Placement.Base.z
             else:
@@ -338,7 +338,7 @@ class FreeCadShape(object):
         object_index[type(self).__name__] += 1
         self.name = "%s%d" % (type(self).__name__, object_index[type(self).__name__])
         if self.method:
-            if self.method and self.method not in [Part.makeSphere] and len(args) < 3:
+            if self.method and self.method not in [Part.makeSphere, Part.makeCylinder] and len(args) < 3:
                 args = [args[0], args[0], args[0]]
             self.object = self.method(*args, **kwargs)
             if len(args) > 0:
@@ -352,6 +352,9 @@ class FreeCadShape(object):
             'top': TopAttachment(self),
             'bottom': BottomAttachment(self)
         }
+        color = kwargs.get('color', None)
+        if color:
+            self.color(color)
         self.add_objects()
         SimpleSolidPy.root_window.loop_once()
 

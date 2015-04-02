@@ -6,9 +6,13 @@ from SimpleSolidPy.primitives import Cube, SVG
 # Create a backing
 backing = Cube(86, 60, 1)
 
+filename = '~/github/pyladies-kit/pyladies/swag/stickers/face_sticker.svg'
+filename = '~/Documents/allis-chalmers.svg'
+filename = '~/unity8/trunk/tests/qmltests/Dash/tst_PageHeader/logo-ubuntu-orange.svg'
+
 # Create a an object with the SVG logo
 logo = SVG(
-    filename='~/github/pyladies-kit/pyladies/swag/stickers/face_sticker.svg',
+    url='http://upload.wikimedia.org/wikipedia/commons/b/b1/Python_and_Qt_2.svg',
     thickness=.6
 )
 

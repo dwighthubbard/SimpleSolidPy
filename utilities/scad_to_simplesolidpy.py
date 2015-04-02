@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-__author__ = 'dwight'
-
 import sys
 sys.path.append('.')
 
